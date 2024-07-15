@@ -79,8 +79,25 @@ def scrape_profile_test():
 
     print(joining_date + ", " + employment_duration)
 
-def scrape_profile(given_url, env_username, env_password):
+def scrape_profile(given_url: str, env_username: str, env_password: str) -> int:
     # Check if the URL has been scraped before
+    url_hash = hashlib.sha256(given_url.encode()).hexdigest()
+    url_hash_file = f"./scraped_urls/profiles/{url_hash}"
+
+    if os.path.exists(url_hash_file):
+        while True:
+            response = input("The URL has been scraped before. Do you want to scrape the URL again? (Y/N): ")
+            if response.lower() == "y":
+                break
+            elif response.lower() == "n":
+                return 0
+            else:
+                print("Please enter a valid response")
+        return
+    else:
+        with open(url_hash_file, "w") as file:
+            print(f"Created file at {url_hash_file}")
+            file.write(given_url + "\n")
 
     # Creating an instance
     service = Service(executable_path="./driver/chromedriver")
@@ -132,67 +149,11 @@ def scrape_profile(given_url, env_username, env_password):
     src = driver.page_source
 
     # Write the HTML of the page to a file
-    with open("profile.html", "w", encoding="utf-8") as file:
+    with open(url_hash_file, "a", encoding="utf-8") as file:
         file.write(src)
+        print(f"HTML of the page written to file at {url_hash_file}")
 
-    # # Now using beautiful soup
-    # soup = BeautifulSoup(src, 'lxml')
-
-    # # Extracting the HTML of the complete introduction box
-    # # that contains the name, company name, and the location
-    # intro = soup.find('div', {'class': 'pv-text-details__left-panel'})
-    
-    # print(intro)
-
-    # # In case of an error, try changing the tags used here.
-
-    # name_loc = intro.find("h1")
-
-    # # Extracting the Name
-    # name = name_loc.get_text().strip()
-    # # strip() is used to remove any extra blank spaces
-
-    # works_at_loc = intro.find("div", {'class': 'text-body-medium'})
-
-    # # this gives us the HTML of the tag in which the Company Name is present
-    # # Extracting the Company Name
-    # works_at = works_at_loc.get_text().strip()
-
-
-    # location_loc = intro.find_all("span", {'class': 'text-body-small'})
-
-    # # Ectracting the Location
-    # # The 2nd element in the location_loc variable has the location
-    # location = location_loc[0].get_text().strip()
-
-    # print("Name -->", name,
-    #     "\nWorks At -->", works_at,
-    #     "\nLocation -->", location)
-    
-    # # Getting the HTML of the Experience section in the profile
-    # experience = soup.find("section", {"id": "experience-section"}).find('ul')
-    
-    # print(experience)
-
-    # # In case of an error, try changing the tags used here.
-
-    # li_tags = experience.find('div')
-    # a_tags = li_tags.find("a")
-    # job_title = a_tags.find("h3").get_text().strip()
-
-    # print(job_title)
-
-    # company_name = a_tags.find_all("p")[1].get_text().strip()
-    # print(company_name)
-
-    # joining_date = a_tags.find_all("h4")[0].find_all("span")[1].get_text().strip()
-
-    # employment_duration = a_tags.find_all("h4")[1].find_all(
-    #     "span")[1].get_text().strip()
-
-    # print(joining_date + ", " + employment_duration)
-
-
+    return 0
 
 def main():
     # Load the .env file
