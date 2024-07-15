@@ -6,6 +6,8 @@ from selenium.webdriver.chrome.options import Options
 
 from bs4 import BeautifulSoup
 
+import lxml
+
 import os
 
 from urllib.parse import urlparse
@@ -19,17 +21,17 @@ from dotenv import load_dotenv
 import time
 import sys
 
-def scrape_profile_test():
-    src = open("profile.html", "r", encoding="utf-8").read()
+def parse_profile_html(file_path: str) -> None:
+    src = open(file_path, "r", encoding="utf-8").read()
 
     # Now using beautiful soup
     soup = BeautifulSoup(src, 'lxml')
 
     # Extracting the HTML of the complete introduction box
     # that contains the name, company name, and the location
-    intro = soup.find('div', {'class': 'pv-text-details__left-panel'})
+    intro = soup.find('div', {'class': 'ph5'})
     
-    print(intro)
+    # print(intro)
 
     # In case of an error, try changing the tags used here.
 
@@ -80,11 +82,8 @@ def scrape_profile_test():
     print(joining_date + ", " + employment_duration)
 
 def scrape_profile(given_url: str, env_username: str, env_password: str) -> int:
-    # Check if the URL has been scraped before
-    url_hash = hashlib.sha256(given_url.encode()).hexdigest()
-    url_hash_file = f"./scraped_urls/profiles/{url_hash}"
 
-    if os.path.exists(url_hash_file):
+    if os.path.exists(given_url):
         while True:
             response = input("The URL has been scraped before. Do you want to scrape the URL again? (Y/N): ")
             if response.lower() == "y":
@@ -95,8 +94,8 @@ def scrape_profile(given_url: str, env_username: str, env_password: str) -> int:
                 print("Please enter a valid response")
         return
     else:
-        with open(url_hash_file, "w") as file:
-            print(f"Created file at {url_hash_file}")
+        with open(given_url, "w") as file:
+            print(f"Created file at {given_url}")
             file.write(given_url + "\n")
 
     # Creating an instance
@@ -149,9 +148,9 @@ def scrape_profile(given_url: str, env_username: str, env_password: str) -> int:
     src = driver.page_source
 
     # Write the HTML of the page to a file
-    with open(url_hash_file, "a", encoding="utf-8") as file:
+    with open(given_url, "a", encoding="utf-8") as file:
         file.write(src)
-        print(f"HTML of the page written to file at {url_hash_file}")
+        print(f"HTML of the page written to file at {given_url}")
 
     return 0
 
@@ -184,19 +183,23 @@ def main():
                                                   help="Scrape a LinkedIn profile by giving the URL")
     
     # If the function is ScrapeProfile, expect a url argument to be passed with it
-    scrape_profile_parser.add_argument("-scrape_profile_url", 
+    scrape_profile_parser.add_argument("scrape_profile_url", 
                                        help="The URL of the LinkedIn profile you want to scrape", 
                                        nargs=1)
-    
-    scrape_profile_parser.add_argument("-test_parsing", 
-                                       help="The URL of the LinkedIn profile you want to scrape",
-                                       type=str)
     
     args = parser.parse_args()
 
     # If the function is ScrapeProfile, call the scrape_profile function
-    if args.scrape_profile_url:
-        scrape_profile(args.scrape_profile_url[0], username, password)
+    if args.scrape_profile_url[0] != None or args.scrape_profile_url[0] != "":
+        url_hash = hashlib.sha256(args.scrape_profile_url[0].encode()).hexdigest()
+        url_hash_file = f"./scraped_urls/profiles/{url_hash}"
+
+        if scrape_profile(url_hash_file, username, password) > 0:
+            print("Error scraping profile")
+        else:
+            print("Successfully scraped or already scraped this profile")
+            parse_profile_html(url_hash_file)
+
 
 if __name__ == "__main__":
     main()
