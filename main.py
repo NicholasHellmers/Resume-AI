@@ -21,83 +21,86 @@ from dotenv import load_dotenv
 import time
 import sys
 
-def parse_profile_html(file_path: str) -> None:
-    src = open(file_path, "r", encoding="utf-8").read()
+from dataclasses import dataclass
+
+@dataclass
+class Experience:
+    title = str
+    company = str
+    location = str
+    start_date = str
+    end_date = str
+    duration = str
+    description = str
+
+@dataclass
+class Post:
+    type = str
+    title = str
+    content = str
+    likes = int
+    comments = int
+    shares = int
+
+@dataclass
+class Profile:
+    name = str
+    headline = str
+    location = str
+    about = str
+    recient_posts = list[]
+
+
+def parse_profile_html(url_hash: str) -> None:
+    src = open("./scraped_urls/profiles/" + url_hash, "r", encoding="utf-8").read()
+
+    if src == None or src == "":
+        print("Error reading the file")
+        return
 
     # Now using beautiful soup
     soup = BeautifulSoup(src, 'lxml')
 
-    # Extracting the HTML of the complete introduction box
-    # that contains the name, company name, and the location
-    intro = soup.find('div', {'class': 'ph5'})
-    
-    # print(intro)
+    # Get the url of the profile, sits on the first line of the file
+    profile_url = src.split("\n")[0]
 
-    # In case of an error, try changing the tags used here.
+    # Get the name of the person
+    name = soup.find("h1", class_="text-heading-xlarge inline t-24 v-align-middle break-words").text.strip()
 
-    name_loc = intro.find("h1")
+    # Get the headline of the person
+    headline = soup.find("div", class_="text-body-medium break-words").text.strip()
 
-    # Extracting the Name
-    name = name_loc.get_text().strip()
-    # strip() is used to remove any extra blank spaces
+    # Get the location of the person
+    location = soup.find("span", class_="text-body-small inline t-black--light break-words").text.strip()
 
-    works_at_loc = intro.find("div", {'class': 'text-body-medium'})
+    about = soup.find("div", class_="display-flex ph5 pv3").text.replace("…see more", "").strip()
 
-    # this gives us the HTML of the tag in which the Company Name is present
-    # Extracting the Company Name
-    works_at = works_at_loc.get_text().strip()
+    recient_posts = soup.find("ul", class_="display-flex flex-wrap list-style-none justify-space-between")
 
+    recient_posts = recient_posts.find_all("li")
 
-    location_loc = intro.find_all("span", {'class': 'text-body-small'})
+    for post in recient_posts:
+        post_type = post.find("span", class_="feed-mini-update-contextual-description__text").text.strip()
+        post_title = post.find("span", class_="break-words").text.strip()
+        post_content = post.find("div", class_="feed-shared-update-v2__description-wrapper ember-view").text.strip()
+        post_likes = post.find("button", class_="social-details-social-counts__reactions-count").text.strip()
+        post_comments = post.find("button", class_="social-details-social-counts__comments-count").text.strip()
+        post_shares = post.find("button", class_="social-details-social-counts__shares-count").text.strip()
 
-    # Ectracting the Location
-    # The 2nd element in the location_loc variable has the location
-    location = location_loc[0].get_text().strip()
+        print(f"Post Type: {post_type}")
+        print(f"Post Title: {post_title}")
+        print(f"Post Content: {post_content}")
+        print(f"Post Likes: {post_likes}")
+        print(f"Post Comments: {post_comments}")
+        print(f"Post Shares: {post_shares}")
 
-    print("Name -->", name,
-        "\nWorks At -->", works_at,
-        "\nLocation -->", location)
-    
-    # Getting the HTML of the Experience section in the profile
-    experience = soup.find("section", {"id": "experience-section"}).find('ul')
-    
-    print(experience)
+    print(f"Name: {name}")
+    print(f"Headline: {headline}")
+    print(f"Location: {location}")
+    print(f"About: {about}")
 
-    # In case of an error, try changing the tags used here.
-
-    li_tags = experience.find('div')
-    a_tags = li_tags.find("a")
-    job_title = a_tags.find("h3").get_text().strip()
-
-    print(job_title)
-
-    company_name = a_tags.find_all("p")[1].get_text().strip()
-    print(company_name)
-
-    joining_date = a_tags.find_all("h4")[0].find_all("span")[1].get_text().strip()
-
-    employment_duration = a_tags.find_all("h4")[1].find_all(
-        "span")[1].get_text().strip()
-
-    print(joining_date + ", " + employment_duration)
 
 def scrape_profile(given_url: str, env_username: str, env_password: str) -> int:
-
-    if os.path.exists(given_url):
-        while True:
-            response = input("The URL has been scraped before. Do you want to scrape the URL again? (Y/N): ")
-            if response.lower() == "y":
-                break
-            elif response.lower() == "n":
-                return 0
-            else:
-                print("Please enter a valid response")
-        return
-    else:
-        with open(given_url, "w") as file:
-            print(f"Created file at {given_url}")
-            file.write(given_url + "\n")
-
     # Creating an instance
     service = Service(executable_path="./driver/chromedriver")
     chrome_options = Options()
@@ -191,14 +194,39 @@ def main():
 
     # If the function is ScrapeProfile, call the scrape_profile function
     if args.scrape_profile_url[0] != None or args.scrape_profile_url[0] != "":
+    
         url_hash = hashlib.sha256(args.scrape_profile_url[0].encode()).hexdigest()
-        url_hash_file = f"./scraped_urls/profiles/{url_hash}"
+        print(f"URL: {args.scrape_profile_url[0]}")
+        print(f"URL Hash: {url_hash}")
+        print(f"File location: {'./scraped_urls/profiles/' + url_hash}")
 
-        if scrape_profile(url_hash_file, username, password) > 0:
-            print("Error scraping profile")
+        if os.path.exists("./scraped_urls/profiles/" + url_hash):
+            while True:
+                response = input("The URL has been scraped before. Do you want to scrape the URL again? (Y/N): ")
+                if response.lower() == "y":
+                    if scrape_profile(args.scrape_prfile_url[0], username, password) > 0:
+                        print("Error scraping profile")
+                    else:
+                        print("Successfully scraped scraped this profile")
+                    break
+                elif response.lower() == "n":
+                    parse_profile_html(url_hash)
+                    return 0
+                else:
+                    print("Please enter a valid response")
+            return
         else:
-            print("Successfully scraped or already scraped this profile")
-            parse_profile_html(url_hash_file)
+            with open("./scraped_urls/profiles/" + url_hash, "w") as file:
+                print(f"Created file at {'./scraped_urls/profiles/' + url_hash}")
+                file.write(args.scrape_profile_url[0] + "\n")
+                if scrape_profile(args.scrape_prfile_url[0], username, password) > 0:
+                    print("Error scraping profile")
+                else:
+                    print("Successfully scraped scraped this profile")
+
+    return 0
+
+    
 
 
 if __name__ == "__main__":
