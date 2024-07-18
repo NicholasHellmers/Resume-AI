@@ -4,6 +4,8 @@ from selenium.webdriver.common.by import By
 # from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 
+from enum import Enum
+
 from bs4 import BeautifulSoup
 
 import lxml
@@ -21,34 +23,8 @@ from dotenv import load_dotenv
 import time
 import sys
 
-from dataclasses import dataclass
-
-@dataclass
-class Experience:
-    title = str
-    company = str
-    location = str
-    start_date = str
-    end_date = str
-    duration = str
-    description = str
-
-@dataclass
-class Post:
-    type = str
-    content = str
-    likes = int
-    comments = int
-    link = str
-
-@dataclass
-class Profile:
-    name = str
-    headline = str
-    location = str
-    about = str
-    recient_posts = list[Post]
-
+from scrape_profile import LinkedInProfileParser
+        
 
 def parse_profile_html(url_hash: str) -> None:
     src = open("./scraped_urls/profiles/" + url_hash, "r", encoding="utf-8").read()
@@ -98,11 +74,29 @@ def parse_profile_html(url_hash: str) -> None:
         print(f"Post Comments: {post_comments}")
         print(f"Post Link: {post_link}")
 
-    print(f"Profile URL: {profile_url}")
-    print(f"Name: {name}")
-    print(f"Headline: {headline}")
-    print(f"Location: {location}")
-    print(f"About: {about}")
+    profile_cards = soup.find_all("section", attrs={"data-view-name": "profile-card"})
+
+    experience_section = None
+
+    education_section = None
+
+    licenses_and_certifications_section = None
+
+    for profile_card in profile_cards:
+        if profile_card.find("div", id="experience"):
+            experience_section = profile_card
+
+        elif profile_card.find("div", id="education"):
+            education_section = profile_card
+
+        elif profile_card.find("div", id="licenses_and_certifications"):
+            licenses_and_certifications_section = profile_card
+
+    # print(f"Profile URL: {profile_url}")
+    # print(f"Name: {name}")
+    # print(f"Headline: {headline}")
+    # print(f"Location: {location}")
+    # print(f"About: {about}")
 
 
 def scrape_profile(given_url: str, env_username: str, env_password: str) -> int:
@@ -215,7 +209,7 @@ def main():
                         print("Successfully scraped scraped this profile")
                     break
                 elif response.lower() == "n":
-                    parse_profile_html(url_hash)
+                    parsed_html = LinkedInProfileParser(args.scrape_profile_url[0], "./scraped_urls/profiles/" + url_hash)
                     return 0
                 else:
                     print("Please enter a valid response")
@@ -224,6 +218,7 @@ def main():
             with open("./scraped_urls/profiles/" + url_hash, "w") as file:
                 print(f"Created file at {'./scraped_urls/profiles/' + url_hash}")
                 file.write(args.scrape_profile_url[0] + "\n")
+
                 if scrape_profile(args.scrape_prfile_url[0], username, password) > 0:
                     print("Error scraping profile")
                 else:
