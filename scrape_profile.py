@@ -81,28 +81,29 @@ class LinkedInProfileParser:
         soup = BeautifulSoup(src, 'lxml')
 
         self.name = soup.find("h1", class_="text-heading-xlarge inline t-24 v-align-middle break-words").text.strip()
-        print(f"Name: {self.name}")
+        # print(f"Name: {self.name}")
 
         self.headline = soup.find("div", class_="text-body-medium break-words").text.strip()
-        print(f"Headline: {self.headline}")
+        # print(f"Headline: {self.headline}")
 
         self.location = soup.find("span", class_="text-body-small inline t-black--light break-words").text.strip()
-        print(f"Location: {self.location}")
+        # print(f"Location: {self.location}")
 
         profile_cards = soup.find_all("section", attrs={"data-view-name": "profile-card"})
-        print(f"Profile Cards: {len(profile_cards)}")
+        # print(f"Profile Cards: {len(profile_cards)}")
 
         for profile_card in profile_cards:
             if profile_card.find("div", id="about"):
                 self.about = self._parse_about(profile_card)
-                print(f"About: {self.about}")
+                # print(f"About: {self.about}")
 
             elif profile_card.find("div", id="content_collections"):
                 self.posts = self._parse_content_collections(profile_card)
-                print(f"Posts: {len(self.posts)}")
+                # print(f"Posts: {len(self.posts)}")
 
-            # elif profile_card.find("div", id="experience"):
-            #     sections["experience"] = profile_card
+            elif profile_card.find("div", id="experience"):
+                self.experiences = self._parse_experience(profile_card)
+                # print(f"Experiences: {len(self.experiences)}")
 
             # elif profile_card.find("div", id="education"):
             #     sections["education"] = profile_card
@@ -164,3 +165,43 @@ class LinkedInProfileParser:
             posts.append(Post(type=post_type, content=post_content, likes=post_likes, comments=post_comments, link=post_link))
 
         return posts
+    
+    def _parse_experience(self, experience_section) -> list[Experience] | None:
+        '''
+        This function is used to parse the experience section of a LinkedIn profile
+        Params:
+        - experience_section: The experience section, in html, of the LinkedIn profile
+        Returns:
+        - A list of Experience objects, or None if not found
+        '''
+        experiences: list[Experience] = []
+
+        experiences_html = experience_section.find_all("li", class_="artdeco-list__item")
+
+        for experience_html in experiences_html:
+            header = experience_html.find("div", class_="display-flex flex-row justify-space-between")
+
+            body = experience_html.find("ul")
+
+            # print(body)
+
+            header_spans = header.find_all("span", class_="visually-hidden")
+
+            tmp = []
+
+            for span in header_spans:
+                tmp.append(span.text)
+
+            experiences.append(Experience(
+                title=tmp[0] if len(tmp) > 0 else "",
+                company=tmp[1] if len(tmp) > 1 else "",
+                start_date=tmp[2] if len(tmp) > 2 else "",
+                location=tmp[3] if len(tmp) > 3 else "",
+                end_date="",
+                duration="",
+                description=""
+            ))
+
+        print(experiences)
+
+        return experiences
