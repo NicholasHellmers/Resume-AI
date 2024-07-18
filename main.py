@@ -4,10 +4,6 @@ from selenium.webdriver.common.by import By
 # from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 
-from bs4 import BeautifulSoup
-
-import lxml
-
 import os
 
 from urllib.parse import urlparse
@@ -22,80 +18,6 @@ import time
 import sys
 
 from scrape_profile import LinkedInProfileParser
-        
-
-def parse_profile_html(url_hash: str) -> None:
-    src = open("./scraped_urls/profiles/" + url_hash, "r", encoding="utf-8").read()
-
-    if src == None or src == "":
-        print("Error reading the file")
-        return
-
-    # Now using beautiful soup
-    soup = BeautifulSoup(src, 'lxml')
-
-    # Get the url of the profile, sits on the first line of the file
-    profile_url = src.split("\n")[0]
-
-    name = soup.find("h1", class_="text-heading-xlarge inline t-24 v-align-middle break-words").text.strip()
-
-    headline = soup.find("div", class_="text-body-medium break-words").text.strip()
-
-    location = soup.find("span", class_="text-body-small inline t-black--light break-words").text.strip()
-
-    about = soup.find("div", class_="display-flex ph5 pv3").text.replace("…see more", "").strip()
-
-    recient_posts = soup.find("ul", class_="display-flex flex-wrap list-style-none justify-space-between")
-
-    recient_posts = recient_posts.find_all("li", class_="profile-creator-shared-feed-update__mini-container")
-
-    for post in recient_posts:
-        
-        post_type = post.find("span", class_="feed-mini-update-contextual-description__text").text.strip()
-
-        if "posted" not in post_type:
-            continue
-
-        post_type = "posted"
-        
-        post_content = post.find("div", class_="display-flex flex-row").text.replace("…show more", "").strip()
-        post_social = post.find("ul", class_="display-flex")
-
-        post_likes = post_social.find_all("li")[0].text.replace(" likes", "").strip()
-        post_comments = post_social.find_all("li")[1].text.replace(" comments", "").strip()
-
-        post_link = post.find("a", class_="app-aware-link")["href"]
-
-        print(f"Post Type: {post_type}")
-        print(f"Post Content: {post_content}")
-        print(f"Post Likes: {post_likes}")
-        print(f"Post Comments: {post_comments}")
-        print(f"Post Link: {post_link}")
-
-    profile_cards = soup.find_all("section", attrs={"data-view-name": "profile-card"})
-
-    experience_section = None
-
-    education_section = None
-
-    licenses_and_certifications_section = None
-
-    for profile_card in profile_cards:
-        if profile_card.find("div", id="experience"):
-            experience_section = profile_card
-
-        elif profile_card.find("div", id="education"):
-            education_section = profile_card
-
-        elif profile_card.find("div", id="licenses_and_certifications"):
-            licenses_and_certifications_section = profile_card
-
-    # print(f"Profile URL: {profile_url}")
-    # print(f"Name: {name}")
-    # print(f"Headline: {headline}")
-    # print(f"Location: {location}")
-    # print(f"About: {about}")
-
 
 def scrape_profile(given_url: str, env_username: str, env_password: str) -> int:
     # Creating an instance
@@ -223,9 +145,6 @@ def main():
                     print("Successfully scraped scraped this profile")
 
     return 0
-
-    
-
 
 if __name__ == "__main__":
     main()
