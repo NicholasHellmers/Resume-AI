@@ -2,50 +2,52 @@ from bs4 import BeautifulSoup
 
 from dataclasses import dataclass
 
+import lxml
+
 @dataclass
 class Experience:
-    title = str
-    company = str
-    location = str
-    start_date = str
-    end_date = str
-    duration = str
-    description = str
+    title: str
+    company: str
+    location: str
+    start_date: str
+    end_date: str
+    duration: str
+    description: str
 
 @dataclass
 class Post:
-    type = str
-    content = str
-    likes = int
-    comments = int
-    link = str
+    type: str
+    content: str
+    likes: int
+    comments: int
+    link: str
 
 @dataclass
 class Education:
-    school = str
-    degree = str
-    field_of_study = str
-    start_date = str
-    end_date = str
-    duration = str
-    description = str
+    school: str
+    degree: str
+    field_of_study: str
+    start_date: str
+    end_date: str
+    duration: str
+    description: str
 
 @dataclass
 class LicenseAndCertification:
-    name = str
-    issuing_organization = str
-    issue_date = str
-    expiration_date = str
-    credential_id = str
+    name: str
+    issuing_organization: str
+    issue_date: str
+    expiration_date: str
+    credential_id: str
 
 @dataclass
 class Project:
-    name = str
-    description = str
-    start_date = str
-    end_date = str
-    duration = str
-    link = str
+    name: str
+    description: str
+    start_date: str
+    end_date: str
+    duration: str
+    link: str
 
 class LinkedInProfileParser:
     '''
@@ -79,19 +81,25 @@ class LinkedInProfileParser:
         soup = BeautifulSoup(src, 'lxml')
 
         self.name = soup.find("h1", class_="text-heading-xlarge inline t-24 v-align-middle break-words").text.strip()
+        print(f"Name: {self.name}")
 
         self.headline = soup.find("div", class_="text-body-medium break-words").text.strip()
+        print(f"Headline: {self.headline}")
 
         self.location = soup.find("span", class_="text-body-small inline t-black--light break-words").text.strip()
+        print(f"Location: {self.location}")
 
         profile_cards = soup.find_all("section", attrs={"data-view-name": "profile-card"})
+        print(f"Profile Cards: {len(profile_cards)}")
 
         for profile_card in profile_cards:
             if profile_card.find("div", id="about"):
                 self.about = self._parse_about(profile_card)
+                print(f"About: {self.about}")
 
             elif profile_card.find("div", id="content_collections"):
                 self.posts = self._parse_content_collections(profile_card)
+                print(f"Posts: {len(self.posts)}")
 
             # elif profile_card.find("div", id="experience"):
             #     sections["experience"] = profile_card
@@ -130,7 +138,6 @@ class LinkedInProfileParser:
         Returns:
         - A list of Post objects, or None if not found
         '''
-
         posts: list[Post] = []
 
         recient_posts = content_collections_section.find("ul", class_="display-flex flex-wrap list-style-none justify-space-between")
