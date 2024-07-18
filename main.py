@@ -36,11 +36,10 @@ class Experience:
 @dataclass
 class Post:
     type = str
-    title = str
     content = str
     likes = int
     comments = int
-    shares = int
+    link = str
 
 @dataclass
 class Profile:
@@ -48,7 +47,7 @@ class Profile:
     headline = str
     location = str
     about = str
-    recient_posts = list[]
+    recient_posts = list[Post]
 
 
 def parse_profile_html(url_hash: str) -> None:
@@ -64,36 +63,42 @@ def parse_profile_html(url_hash: str) -> None:
     # Get the url of the profile, sits on the first line of the file
     profile_url = src.split("\n")[0]
 
-    # Get the name of the person
     name = soup.find("h1", class_="text-heading-xlarge inline t-24 v-align-middle break-words").text.strip()
 
-    # Get the headline of the person
     headline = soup.find("div", class_="text-body-medium break-words").text.strip()
 
-    # Get the location of the person
     location = soup.find("span", class_="text-body-small inline t-black--light break-words").text.strip()
 
     about = soup.find("div", class_="display-flex ph5 pv3").text.replace("…see more", "").strip()
 
     recient_posts = soup.find("ul", class_="display-flex flex-wrap list-style-none justify-space-between")
 
-    recient_posts = recient_posts.find_all("li")
+    recient_posts = recient_posts.find_all("li", class_="profile-creator-shared-feed-update__mini-container")
 
     for post in recient_posts:
+        
         post_type = post.find("span", class_="feed-mini-update-contextual-description__text").text.strip()
-        post_title = post.find("span", class_="break-words").text.strip()
-        post_content = post.find("div", class_="feed-shared-update-v2__description-wrapper ember-view").text.strip()
-        post_likes = post.find("button", class_="social-details-social-counts__reactions-count").text.strip()
-        post_comments = post.find("button", class_="social-details-social-counts__comments-count").text.strip()
-        post_shares = post.find("button", class_="social-details-social-counts__shares-count").text.strip()
+
+        if "posted" not in post_type:
+            continue
+
+        post_type = "posted"
+        
+        post_content = post.find("div", class_="display-flex flex-row").text.replace("…show more", "").strip()
+        post_social = post.find("ul", class_="display-flex")
+
+        post_likes = post_social.find_all("li")[0].text.replace(" likes", "").strip()
+        post_comments = post_social.find_all("li")[1].text.replace(" comments", "").strip()
+
+        post_link = post.find("a", class_="app-aware-link")["href"]
 
         print(f"Post Type: {post_type}")
-        print(f"Post Title: {post_title}")
         print(f"Post Content: {post_content}")
         print(f"Post Likes: {post_likes}")
         print(f"Post Comments: {post_comments}")
-        print(f"Post Shares: {post_shares}")
+        print(f"Post Link: {post_link}")
 
+    print(f"Profile URL: {profile_url}")
     print(f"Name: {name}")
     print(f"Headline: {headline}")
     print(f"Location: {location}")
