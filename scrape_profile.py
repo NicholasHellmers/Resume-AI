@@ -26,9 +26,6 @@ class Post:
 class Education:
     school: str
     degree: str
-    field_of_study: str
-    start_date: str
-    end_date: str
     duration: str
     description: str
 
@@ -105,8 +102,9 @@ class LinkedInProfileParser:
                 self.experiences = self._parse_experience(profile_card)
                 # print(f"Experiences: {len(self.experiences)}")
 
-            # elif profile_card.find("div", id="education"):
-            #     sections["education"] = profile_card
+            elif profile_card.find("div", id="education"):
+                self.education = self._parse_education(profile_card)
+                # print(f"Education: {len(self.education)}")
 
             # elif profile_card.find("div", id="licenses_and_certifications"):
             #     sections["licenses_and_certifications"] = profile_card
@@ -183,7 +181,7 @@ class LinkedInProfileParser:
 
             body = experience_html.find("ul")
 
-            # print(body)
+            description = body.find("span")
 
             header_spans = header.find_all("span", class_="visually-hidden")
 
@@ -193,15 +191,48 @@ class LinkedInProfileParser:
                 tmp.append(span.text)
 
             experiences.append(Experience(
-                title=tmp[0] if len(tmp) > 0 else "",
-                company=tmp[1] if len(tmp) > 1 else "",
-                start_date=tmp[2] if len(tmp) > 2 else "",
-                location=tmp[3] if len(tmp) > 3 else "",
-                end_date="",
-                duration="",
-                description=""
+                title = tmp[0] if len(tmp) > 0 else "",
+                company = tmp[1] if len(tmp) > 1 else "",
+                start_date = tmp[2] if len(tmp) > 2 else "",
+                location = tmp[3] if len(tmp) > 3 else "",
+                end_date = "",
+                duration = "",
+                description = description.text if description != None else ""
             ))
 
         print(experiences)
 
         return experiences
+    
+    def _parse_education(self, education_section) -> list[Education] | None:
+        '''
+        This function is used to parse the education section of a LinkedIn profile
+        Params:
+        - education_section: The education section, in html, of the LinkedIn profile
+        Returns:
+        - A list of Education objects, or None if not found
+        '''
+        education: list[Education] = []
+
+        education_html = education_section.find_all("li", class_="artdeco-list__item")
+
+        # print(education_html)
+
+        tmp = []
+
+        for education_item in education_html:
+            spans = education_item.find_all("span", attrs={"aria-hidden": "true"})
+
+            for span in spans:
+                tmp.append(span.text)
+
+            education.append(Education(
+                school = tmp[0] if len(tmp) > 0 else "",
+                degree = tmp[1] if len(tmp) > 1 else "",
+                duration = tmp[2] if len(tmp) > 2 else "",
+                description = tmp[3] if len(tmp) > 3 else ""
+            ))
+        
+        print(education)
+
+        return education
