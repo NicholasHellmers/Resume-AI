@@ -64,6 +64,7 @@ class LinkedInProfileParser:
         self.experiences: list[Experience] = []
         self.education: list[Education] = []
         self.licenses_and_certifications: list[LicenseAndCertification] = []
+        self.projects: list[Project] = []
 
         self._parse()
 
@@ -95,25 +96,27 @@ class LinkedInProfileParser:
         for profile_card in profile_cards:
             if profile_card.find("div", id="about"):
                 self.about = self._parse_about(profile_card)
-                # print(f"About: {self.about}")
+                print(f"About: {self.about}")
 
             elif profile_card.find("div", id="content_collections"):
                 self.posts = self._parse_content_collections(profile_card)
-                # print(f"Posts: {len(self.posts)}")
+                print(f"Posts: {len(self.posts)}")
 
             elif profile_card.find("div", id="experience"):
                 self.experiences = self._parse_experience(profile_card)
-                # print(f"Experiences: {len(self.experiences)}")
+                print(f"Experiences: {self.experiences}")
 
             elif profile_card.find("div", id="education"):
                 self.education = self._parse_education(profile_card)
-                # print(f"Education: {len(self.education)}")
+                print(f"Education: {self.education}")
 
             elif profile_card.find("div", id="licenses_and_certifications"):
                 self.licenses_and_certifications = self._parse_licenses_and_certifications(profile_card)
+                print(f"Licenses and Certifications: {self.licenses_and_certifications}")
 
             elif profile_card.find("div", id="projects"):
-                self._parse_projects(profile_card)
+                self.projects = self._parse_projects(profile_card)
+                print(f"Projects: {self.projects}")
 
             # elif profile_card.find("div", id="skills"): # This is not relevant for now
             #     sections["skills"] = profile_card
@@ -159,7 +162,7 @@ class LinkedInProfileParser:
             post_social = post.find("ul", class_="display-flex")
 
             post_likes = post_social.find_all("li")[0].text.replace(" likes", "").strip()
-            post_comments = post_social.find_all("li")[1].text.replace(" comments", "").strip()
+            post_comments = post_social.find_all("li")[1].text.replace(" comments", "").strip() if len(post_social.find_all("li")) > 1 else 0
 
             post_link = post.find("a", class_="app-aware-link")["href"]
 
