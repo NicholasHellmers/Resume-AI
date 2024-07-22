@@ -232,7 +232,5 @@ class LinkedInProfileParser:
                 duration = tmp[2] if len(tmp) > 2 else "",
                 description = tmp[3] if len(tmp) > 3 else ""
             ))
-        
-        print(education)
 
         return education
