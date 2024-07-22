@@ -19,7 +19,7 @@ import sys
 
 from scrape_profile import LinkedInProfileParser
 
-def scrape_profile(given_url: str, env_username: str, env_password: str) -> int:
+def get_profile_html(given_url: str, env_username: str, env_password: str) -> int:
     # Creating an instance
     service = Service(executable_path="./driver/chromedriver")
     chrome_options = Options()
@@ -123,7 +123,7 @@ def main():
             while True:
                 response = input("The URL has been scraped before. Do you want to scrape the URL again? (Y/N): ")
                 if response.lower() == "y":
-                    if scrape_profile(args.scrape_prfile_url[0], username, password) > 0:
+                    if get_profile_html(args.scrape_prfile_url[0], username, password) > 0:
                         print("Error scraping profile")
                     else:
                         print("Successfully scraped scraped this profile")
@@ -139,7 +139,7 @@ def main():
                 print(f"Created file at {'./scraped_urls/profiles/' + url_hash}")
                 file.write(args.scrape_profile_url[0] + "\n")
 
-                if scrape_profile(args.scrape_prfile_url[0], username, password) > 0:
+                if get_profile_html(args.scrape_prfile_url[0], username, password) > 0:
                     print("Error scraping profile")
                 else:
                     print("Successfully scraped scraped this profile")
