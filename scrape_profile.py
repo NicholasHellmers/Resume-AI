@@ -67,6 +67,9 @@ class LinkedInProfileParser:
 
         self._parse()
 
+    def __str__(self):
+        return f"Name: {self.name}\nHeadline: {self.headline}\nLocation: {self.location}\nAbout: {self.about[:150] + '...' if len(self.about) > 150 else self.about}\nPosts: {len(self.posts)}\nExperiences: {len(self.experiences)}\nEducation: {len(self.education)}\nLicenses and Certifications: {len(self.licenses_and_certifications)}"
+
     def _parse(self):
         src = open(self.html, "r", encoding="utf-8").read()
 
@@ -106,16 +109,16 @@ class LinkedInProfileParser:
                 self.education = self._parse_education(profile_card)
                 # print(f"Education: {len(self.education)}")
 
-            # elif profile_card.find("div", id="licenses_and_certifications"):
-            #     sections["licenses_and_certifications"] = profile_card
+            elif profile_card.find("div", id="licenses_and_certifications"):
+                self.licenses_and_certifications = self._parse_licenses_and_certifications(profile_card)
 
-            # elif profile_card.find("div", id="projects"):
-            #     sections["projects"] = profile_card
+            elif profile_card.find("div", id="projects"):
+                self._parse_projects(profile_card)
 
-            # elif profile_card.find("div", id="skills"):
+            # elif profile_card.find("div", id="skills"): # This is not relevant for now
             #     sections["skills"] = profile_card
 
-            # elif profile_card.find("div", id="languages"):
+            # elif profile_card.find("div", id="languages"): # This is not relevant for now
             #     sections["languages"] = profile_card
 
     def _parse_about(self, about_section) -> str | None:
@@ -200,8 +203,6 @@ class LinkedInProfileParser:
                 description = description.text if description != None else ""
             ))
 
-        print(experiences)
-
         return experiences
     
     def _parse_education(self, education_section) -> list[Education] | None:
@@ -234,3 +235,64 @@ class LinkedInProfileParser:
             ))
 
         return education
+    
+    def _parse_licenses_and_certifications(self, licenses_and_certifications_section) -> list[LicenseAndCertification] | None:
+        '''
+        This function is used to parse the licenses and certifications section of a LinkedIn profile
+        Params:
+        - licenses_and_certifications_section: The licenses and certifications section, in html, of the LinkedIn profile
+        Returns:
+        - A list of LicenseAndCertification objects, or None if not found
+        '''
+        licenses_and_certifications: list[LicenseAndCertification] = []
+
+        licenses_and_certifications_html = licenses_and_certifications_section.find_all("li", class_="artdeco-list__item")
+
+        for license_and_certification in licenses_and_certifications_html:
+            spans = license_and_certification.find_all("span", attrs={"aria-hidden": "true"})
+
+            tmp = []
+
+            for span in spans:
+                tmp.append(span.text)
+
+            licenses_and_certifications.append(LicenseAndCertification(
+                name = tmp[0] if len(tmp) > 0 else "",
+                issuing_organization = tmp[1] if len(tmp) > 1 else "",
+                issue_date = tmp[2] if len(tmp) > 2 else "",
+                expiration_date = "",
+                credential_id = tmp[3] if len(tmp) > 3 else ""
+            ))
+
+        return licenses_and_certifications
+    
+    def _parse_projects(self, projects_section) -> list[Project] | None:
+        '''
+        This function is used to parse the projects section of a LinkedIn profile
+        Params:
+        - projects_section: The projects section, in html, of the LinkedIn profile
+        Returns:
+        - A list of Project objects, or None if not found
+        '''
+        projects: list[Project] = []
+
+        projects_html = projects_section.find_all("li", class_="artdeco-list__item")
+
+        for project in projects_html:
+            spans = project.find_all("span", attrs={"aria-hidden": "true"})
+
+            tmp = []
+
+            for span in spans:
+                tmp.append(span.text)
+
+            projects.append(Project(
+                name = tmp[0] if len(tmp) > 0 else "",
+                description = tmp[1] if len(tmp) > 1 else "",
+                start_date = tmp[2].split("-")[0].strip() if len(tmp) > 2 else "",
+                end_date = tmp[2][1].strip() if len(tmp) > 2 else "",
+                duration = "",
+                link = ""
+            ))
+
+        return projects
