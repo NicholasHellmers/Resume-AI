@@ -3,3 +3,5 @@
 /.env
 
 /scraped_urls/profiles/*
+
+/__pycache__

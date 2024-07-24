@@ -9,3 +9,8 @@ Uses GPT api to build tailored resumes.
 ```bash
 python main.py -h // python3 main.py -h
 ```
+
+## To Do:
+- [x] Get the HTML of a profile page
+- [ ] Get the HTML of a job posting
+- [x] Parse the HTML to get the text
